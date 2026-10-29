@@ -28,6 +28,7 @@ jobs:
           N_PAPERS: ${{ inputs.n_papers || '20' }}
         run: python digest.py
       - name: Render PDF
+        if: hashFiles('digests/*.html') != ''
         run: |
           f=$(ls digests/*.html | sort | tail -1)
           google-chrome --headless --no-sandbox --no-pdf-header-footer \

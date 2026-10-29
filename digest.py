@@ -136,6 +136,12 @@ def main():
     print(f"{len(papers)} candidates ({source})")
     if not papers:
         sys.exit("no papers fetched")
+    os.makedirs("digests", exist_ok=True)
+    if not os.environ.get("ANTHROPIC_API_KEY"):  # キー未設定時は候補だけ保存
+        with open(f"digests/candidates-{today}.json", "w", encoding="utf-8") as f:
+            json.dump({"source": source, "papers": papers}, f, ensure_ascii=False, indent=1)
+        print("ANTHROPIC_API_KEY not set; saved candidates only")
+        return
     md_text = f"# 論文ダイジェスト {today}\n\n出典: {source} / 要約: Claude\n\n" + summarize(papers)
     for p in papers:  # arXiv ID をリンク化
         md_text = md_text.replace(p["id"], f"[{p['id']}](https://arxiv.org/abs/{p['id']})", 1)

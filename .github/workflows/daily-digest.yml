@@ -4,6 +4,10 @@ on:
   schedule:
     - cron: "7 22 * * *"   # 毎日 07:07 JST
   workflow_dispatch:
+    inputs:
+      n_papers:
+        description: "本数"
+        default: "20"
 
 permissions:
   contents: write
@@ -21,6 +25,7 @@ jobs:
       - name: Build digest
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          N_PAPERS: ${{ inputs.n_papers || '20' }}
         run: python digest.py
       - name: Render PDF
         run: |

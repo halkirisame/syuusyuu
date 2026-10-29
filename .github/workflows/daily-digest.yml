@@ -1,0 +1,39 @@
+name: Daily paper digest
+
+on:
+  schedule:
+    - cron: "7 22 * * *"   # 毎日 07:07 JST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
+      - name: Build digest
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python digest.py
+      - name: Render PDF
+        run: |
+          f=$(ls digests/*.html | sort | tail -1)
+          google-chrome --headless --no-sandbox --no-pdf-header-footer \
+            --print-to-pdf="${f%.html}.pdf" "file://$PWD/$f"
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add digests
+          git commit -m "Digest $(date -u +%F)" && git push || echo "nothing to commit"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: digest
+          path: digests/*.pdf
